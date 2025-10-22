@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="https://ot365uquqod5u.ok.kimi.link">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js ASX Model Builder - Demo Collection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .demo-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .demo-card h3 {
+            margin-top: 0;
+            color: #FFD700;
+            font-size: 1.4em;
+        }
+        .demo-card p {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+        .demo-link {
+            display: inline-block;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .demo-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .features {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .features h3 {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .features li:before {
+            content: "✨";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Three.js ASX Model Builder</h1>
+        <p class="subtitle">Interactive 3D Gameplay Models with ASX JSON Format</p>
+        
+        <div class="features">
+            <h3>What you'll see in the demo:</h3>
+            <ul>
+                <li>Complete ASX JSON structure with geometries, materials, and objects</li>
+                <li>Multiple primitive types: boxes, spheres, cylinders</li>
+                <li>Advanced materials with metalness, roughness, and emissive properties</li>
+                <li>Smooth animations using AnimationMixer</li>
+                <li>Interactive click events with raycasting</li>
+                <li>Professional lighting setup with shadows</li>
+                <li>OrbitControls for 360° scene exploration</li>
+            </ul>
+        </div>
+
+        <div class="demo-grid">
+            <div class="demo-card">
+                <h3>🏰 Fantasy Scene</h3>
+                <p>A complete medieval fantasy scene featuring a knight, treasure chest, and magical sword. Demonstrates multiple geometry types, materials with different properties, and synchronized animations.</p>
+                <p><strong>Features:</strong> Knight breathing animation, floating treasure chest, rotating magical sword, and interactive click messages.</p>
+                <a href="threejs-asx-fantasy-scene.html" class="demo-link">Launch Fantasy Scene</a>
+            </div>
+            
+            <div class="demo-card">
+                <h3>📚 About ASX Format</h3>
+                <p>ASX JSON is a Three.js-friendly format that defines complete 3D scenes with geometries, materials, and object hierarchies. Perfect for gameplay assets and interactive experiences.</p>
+                <p><strong>Benefits:</strong> Human-readable, version-controlled, and easily extensible for complex 3D applications.</p>
+                <a href="https://github.com/mpickettpayments-hue/JSON-ASX" target="_blank" class="demo-link">ASX Specification</a>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+            <h3 style="color: #FFD700;">🛠️ How to Use</h3>
+            <p>Click on any object in the scene to see interactive messages. Use mouse to orbit around the scene, zoom in/out, and explore the 3D models from all angles. The code demonstrates proper ASX JSON structure, animation systems, and interaction patterns you can adapt for your own projects.</p>
+        </div>
+    </div>
+</body>
+</html>
