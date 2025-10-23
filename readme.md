@@ -98,17 +98,7 @@ What you have now
 
 ✅ Router/boot: hash routes → page hydration only
 
-This is the foundation for a real 3D/2D GPU world, with DOM HUD and JSON-OS control — without giving away any proprietary rendering sauce.
 
-If you want, I can now:
-
-add Collision + AABBs + spatial grid as components/systems,
-
-add Scene assets loader hooks (without revealing pipeline),
-
-or wire a Demo “spawn/move/shoot” page into your existing os.json.
-
-Say the word and I’ll drop the next batch.
 # ASX (Advanced Scripting Language) – VSCode Extension Package
 
 This project adds full **VSCode Marketplace** support for the **ASX (Advanced Scripting Language)** used within the **XJSON.APP** ecosystem.
