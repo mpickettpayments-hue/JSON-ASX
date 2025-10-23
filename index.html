@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ASX Syntax Remix Starter</title>
+  <title>ASX Cockpit Designer</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       background: #000;
       font-family: 'Courier New', monospace;
       color: #00ff00;
       overflow: hidden;
     }
     canvas { display: block; }
-
-    /* HUD */
     #hud {
       position: absolute;
       top: 0; left: 0;
@@ -42,6 +41,14 @@
     }
     .shields { top: 20px; left: 20px; }
     .energy { top: 20px; right: 20px; }
+    .radar {
+      position: absolute;
+      bottom: 20px; left: 20px;
+      width: 100px; height: 100px;
+      border: 1px solid #00ff00;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00ff00;
+    }
     .terminal {
       position: absolute;
       bottom: 20px; right: 20px;
@@ -53,8 +60,6 @@
       border-radius: 5px;
       max-width: 300px;
     }
-
-    /* Menu */
     #menu {
       position: absolute;
       top: 10px; left: 50%;
@@ -79,11 +84,9 @@
       box-shadow: 0 0 20px #00ffff;
       transform: scale(1.05);
     }
-
-    /* Builder Tab */
-    #builder {
+    #designer {
       position: absolute;
-      bottom: 100px;
+      bottom: 120px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0,20,0,0.9);
@@ -94,11 +97,11 @@
       color: #00ff00;
       font-size: 0.9em;
     }
-    #builder label {
+    #designer label {
       display: block;
       margin-bottom: 10px;
     }
-    #builder input, #builder select {
+    #designer input {
       width: 100%;
     }
   </style>
@@ -111,7 +114,7 @@
     <button onclick="alert('Settings')">SETTINGS</button>
   </div>
 
-  <div id="builder">
+  <div id="designer">
     <label>Shield Level: <input type="range" min="0" max="100" value="80" oninput="updateBar('shields', this.value)" /></label>
     <label>Energy Level: <input type="range" min="0" max="100" value="60" oninput="updateBar('energy', this.value)" /></label>
     <label>Theme: <select onchange="changeTheme(this.value)">
@@ -125,6 +128,7 @@
     <div class="crosshair"></div>
     <div class="bar shields"><div class="fill" style="width: 80%;"></div></div>
     <div class="bar energy"><div class="fill" style="width: 60%;"></div></div>
+    <div class="radar"></div>
     <div class="terminal">&gt; SYSTEM ONLINE<br/>&gt; TARGET LOCKED<br/>&gt; READY</div>
   </div>
 
@@ -162,6 +166,7 @@
     }
 
     function changeTheme(theme) {
+      const root = document.documentElement;
       if (theme === 'matrix') {
         document.body.style.background = '#000';
         document.body.style.color = '#00ff00';
