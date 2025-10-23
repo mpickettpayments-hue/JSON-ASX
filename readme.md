@@ -57,7 +57,7 @@ Windows PowerShell:
 [IO.File]::WriteAllBytes("assets/icons/icon.png",[Convert]::FromBase64String((Get-Content "assets/icons/icon.png.b64")))
 ```
 
-
+```asx
 
 How INLINE-ASX scripts can use ECS (example)
 
@@ -66,7 +66,7 @@ In your os.json page (e.g., "game"), the inline script can now do this:
 "asx": {
   "inline": "onTick(()=>{});\n// Spawn a player entity once:\nif(!window._spawned){\n  const id = asx.ecs.create('player', {\n    transform: { x: 100, y: 300 },\n    velocity:  { vx: 0, vy: 0 },\n    render:    { color: '#6ff', size: 32 }\n  });\n  // Example: respond to inputs to move player via Velocity\n  onInput('move', (dx, dy) => {\n    const V = asx.ecs.Velocity; const T = asx.ecs.Transform;\n    if (V.has(id)) { const v = V.get(id); v.vx = dx*6; v.vy = (v.vy||0) + dy*6; }\n    if (T.has(id)) { const t = T.get(id); t.x += dx; t.y += dy; }\n  });\n  onInput('shoot', () => {\n    asx.ecs.create('projectile', {\n      transform: { x: 100, y: 280 },\n      velocity:  { vx: 0, vy: -220 },\n      render:    { color: '#ff6', size: 6 },\n      lifetime:  2.0\n    });\n  });\n  window._spawned = true;\n}\n"
 }
-
+```
 
 The WebGL adapter stub deliberately doesn’t draw shapes (per your IP request). It clears the screen and reads ECS state — you’ll hook this to your private renderer later.
 
