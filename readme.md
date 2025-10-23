@@ -57,6 +57,58 @@ Windows PowerShell:
 [IO.File]::WriteAllBytes("assets/icons/icon.png",[Convert]::FromBase64String((Get-Content "assets/icons/icon.png.b64")))
 ```
 
+
+
+How INLINE-ASX scripts can use ECS (example)
+
+In your os.json page (e.g., "game"), the inline script can now do this:
+
+"asx": {
+  "inline": "onTick(()=>{});\n// Spawn a player entity once:\nif(!window._spawned){\n  const id = asx.ecs.create('player', {\n    transform: { x: 100, y: 300 },\n    velocity:  { vx: 0, vy: 0 },\n    render:    { color: '#6ff', size: 32 }\n  });\n  // Example: respond to inputs to move player via Velocity\n  onInput('move', (dx, dy) => {\n    const V = asx.ecs.Velocity; const T = asx.ecs.Transform;\n    if (V.has(id)) { const v = V.get(id); v.vx = dx*6; v.vy = (v.vy||0) + dy*6; }\n    if (T.has(id)) { const t = T.get(id); t.x += dx; t.y += dy; }\n  });\n  onInput('shoot', () => {\n    asx.ecs.create('projectile', {\n      transform: { x: 100, y: 280 },\n      velocity:  { vx: 0, vy: -220 },\n      render:    { color: '#ff6', size: 6 },\n      lifetime:  2.0\n    });\n  });\n  window._spawned = true;\n}\n"
+}
+
+
+The WebGL adapter stub deliberately doesn’t draw shapes (per your IP request). It clears the screen and reads ECS state — you’ll hook this to your private renderer later.
+
+PowerShell quick run (unchanged)
+# from repo root that contains index.html
+python -m http.server 8080
+# open http://localhost:8080
+
+
+or
+
+npm install -g serve
+serve -l 8080
+# open http://localhost:8080
+
+What you have now
+
+✅ OS-B: Single os.json registry SPA
+
+✅ INLINE-ASX: page logic stored in the registry
+
+✅ ECS core: entities, components, systems, queries
+
+✅ ASX runtime: exposes asx.ecs.* to inline scripts
+
+✅ WebGL adapter (stub): reads ECS world per frame (replace with your renderer)
+
+✅ DOM HUD: overlays & fallback
+
+✅ Router/boot: hash routes → page hydration only
+
+This is the foundation for a real 3D/2D GPU world, with DOM HUD and JSON-OS control — without giving away any proprietary rendering sauce.
+
+If you want, I can now:
+
+add Collision + AABBs + spatial grid as components/systems,
+
+add Scene assets loader hooks (without revealing pipeline),
+
+or wire a Demo “spawn/move/shoot” page into your existing os.json.
+
+Say the word and I’ll drop the next batch.
 # ASX (Advanced Scripting Language) – VSCode Extension Package
 
 This project adds full **VSCode Marketplace** support for the **ASX (Advanced Scripting Language)** used within the **XJSON.APP** ecosystem.
