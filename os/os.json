@@ -1,0 +1,358 @@
+{
+  "meta": {
+    "name": "ASX Model Builder OS",
+    "version": "1.0.0",
+    "boot": "home"
+  },
+  "routes": {
+    "/": "home",
+    "/home": "home",
+    "/marketplace": "marketplace",
+    "/builder": "builder",
+    "/demos": "demos",
+    "/fantasy": "fantasy",
+    "/webgl-test": "webgl-test",
+    "/diagnostics": "diagnostics"
+  },
+  "pages": {
+    "home": {
+      "title": "Command Center",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["Command Center"],
+        "content": {
+          "type": "dashboard",
+          "cards": [
+            {
+              "icon": "🛒",
+              "title": "Marketplace",
+              "description": "Browse and purchase premium ASX asset packs",
+              "link": "#/marketplace"
+            },
+            {
+              "icon": "🤖",
+              "title": "AI Builder",
+              "description": "Generate custom 3D assets using conversational AI",
+              "link": "#/builder"
+            },
+            {
+              "icon": "🎮",
+              "title": "Demos",
+              "description": "Interactive 3D demos and capability tests",
+              "link": "#/demos"
+            },
+            {
+              "icon": "🔍",
+              "title": "Diagnostics",
+              "description": "System diagnostics and performance metrics",
+              "link": "#/diagnostics"
+            }
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "matrix-rain",
+        "entities": []
+      },
+      "asx": {
+        "inline": "onTick(() => { /* home page idle animation */ });"
+      }
+    },
+    "marketplace": {
+      "title": "Marketplace",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["Marketplace"],
+        "content": {
+          "type": "store",
+          "hero": {
+            "title": "🚀 BUILD THE MATRIX",
+            "subtitle": "Premium Three.js game assets powered by ASX JSON technology",
+            "cta": ["Start Building", "Browse Packs", "Live Demo"]
+          },
+          "products": [
+            {
+              "id": 1,
+              "name": "Starter Pack",
+              "icon": "🎯",
+              "description": "Basic geometric shapes: cubes, spheres, cylinders with standard materials",
+              "price": 19.99
+            },
+            {
+              "id": 2,
+              "name": "Character Pack",
+              "icon": "🦸",
+              "description": "Humanoid base models, animation rigs, and character controller templates",
+              "price": 49.99
+            },
+            {
+              "id": 3,
+              "name": "Environment Pack",
+              "icon": "🏔️",
+              "description": "Terrain systems, skyboxes, trees, rocks, and environmental assets",
+              "price": 79.99
+            },
+            {
+              "id": 4,
+              "name": "Weapon Arsenal",
+              "icon": "⚔️",
+              "description": "Medieval and sci-fi weapons with particle effects and sound integration",
+              "price": 39.99
+            },
+            {
+              "id": 5,
+              "name": "Particle Effects",
+              "icon": "✨",
+              "description": "Fire, smoke, magic spells, explosions, and environmental effects",
+              "price": 59.99
+            },
+            {
+              "id": 6,
+              "name": "UI Elements",
+              "icon": "🎨",
+              "description": "HUD components, menus, health bars, and interactive UI systems",
+              "price": 29.99
+            },
+            {
+              "id": 7,
+              "name": "Vehicle Pack",
+              "icon": "🚗",
+              "description": "Cars, spaceships, bikes with physics controllers and animations",
+              "price": 89.99
+            },
+            {
+              "id": 8,
+              "name": "Animation Library",
+              "icon": "🎭",
+              "description": "200+ pre-made animations: walk, run, jump, combat, emotes",
+              "price": 99.99
+            },
+            {
+              "id": 9,
+              "name": "Complete Bundle",
+              "icon": "💎",
+              "description": "All packs included plus exclusive bonus content and future updates",
+              "price": 199.99
+            }
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "starfield",
+        "entities": []
+      },
+      "asx": {
+        "inline": "const cart = asx.storage.get('cart') || []; onInput('addToCart', (productId) => { const product = asx.data.products.find(p => p.id === productId); if (product) { const item = cart.find(i => i.id === productId); if (item) { item.quantity++; } else { cart.push({...product, quantity: 1}); } asx.storage.set('cart', cart); asx.emit('cart:updated'); } });"
+      }
+    },
+    "builder": {
+      "title": "AI Builder",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["AI Builder"],
+        "content": {
+          "type": "chat",
+          "sidebar": {
+            "guide": [
+              "Describe your 3D asset",
+              "Specify geometry & materials",
+              "Add animations if needed",
+              "Get ASX JSON instantly"
+            ],
+            "examples": [
+              "Create a glowing sword",
+              "Make a rotating cube",
+              "Build a character model",
+              "Generate a treasure chest"
+            ]
+          },
+          "messages": [
+            {
+              "role": "system",
+              "content": "Welcome to ASX AI Builder! I help you create Three.js game assets using ASX JSON format. Status: Demo Mode (Simulated responses). Describe what you want to build and I'll generate the code!"
+            }
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "starfield",
+        "entities": []
+      },
+      "asx": {
+        "inline": "let messages = []; onInput('sendMessage', (msg) => { messages.push({role: 'user', content: msg}); const response = asx.AI.generate(msg); messages.push({role: 'assistant', content: response}); asx.emit('messages:updated', messages); });"
+      }
+    },
+    "demos": {
+      "title": "Demos",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["Demos"],
+        "content": {
+          "type": "menu",
+          "items": [
+            {
+              "icon": "⚔️",
+              "title": "Fantasy Scene",
+              "description": "Interactive 3D scene with knight, treasure, and sword",
+              "link": "#/fantasy"
+            },
+            {
+              "icon": "🔬",
+              "title": "WebGL Test",
+              "description": "Simple rotating cube capability test",
+              "link": "#/webgl-test"
+            }
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "starfield",
+        "entities": []
+      },
+      "asx": {
+        "inline": "onTick(() => {});"
+      }
+    },
+    "fantasy": {
+      "title": "Fantasy Scene Demo",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["Demos", "Fantasy Scene"],
+        "content": {
+          "type": "scene-info",
+          "title": "⚔️ INTERACTIVE SCENE",
+          "info": [
+            "Knight: Breathing animation",
+            "Chest: Rotating treasure",
+            "Sword: Magical glow"
+          ],
+          "controls": [
+            "🖱️ Drag: Orbit camera",
+            "🔄 Scroll: Zoom in/out",
+            "👆 Click: Interact with objects"
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "fantasy",
+        "entities": [
+          {
+            "type": "knight",
+            "position": [-3, 0, 0],
+            "animations": ["breathing"]
+          },
+          {
+            "type": "chest",
+            "position": [3, 0, 0],
+            "animations": ["rotate", "bob"]
+          },
+          {
+            "type": "sword",
+            "position": [0, 0, -3],
+            "animations": ["rotate"]
+          }
+        ]
+      },
+      "asx": {
+        "inline": "onInput('click', (object) => { const messages = { knight: '⚔️ The knight nods at you with respect!', chest: '💎 The treasure chest glimmers with ancient gold!', sword: '✨ The magical sword pulses with arcane energy!' }; if (messages[object.type]) { asx.ui.alert(messages[object.type]); } });"
+      }
+    },
+    "webgl-test": {
+      "title": "WebGL Test",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["Demos", "WebGL Test"],
+        "content": {
+          "type": "status",
+          "title": "🔬 WEBGL TEST",
+          "status": [
+            {
+              "label": "WebGL",
+              "value": "OPERATIONAL",
+              "color": "success"
+            },
+            {
+              "label": "Renderer",
+              "value": "Loading...",
+              "color": "info"
+            },
+            {
+              "label": "FPS",
+              "value": "60",
+              "color": "success"
+            }
+          ],
+          "info": [
+            "This is a simple WebGL capability test demonstrating Three.js rendering with a rotating cube.",
+            "Status: If you see a spinning multicolored cube, your browser supports WebGL and Three.js.",
+            "Purpose: Verify 3D rendering before loading complex ASX assets."
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "test-cube",
+        "entities": []
+      },
+      "asx": {
+        "inline": "let fps = 0; onTick(() => { fps++; if (asx.time.frame % 60 === 0) { asx.emit('fps:update', fps); fps = 0; } });"
+      }
+    },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "hud": {
+        "showLogo": true,
+        "breadcrumbs": ["Diagnostics"],
+        "content": {
+          "type": "diagnostics",
+          "sections": [
+            {
+              "title": "🖥️ WEBGL",
+              "status": "OPERATIONAL",
+              "items": [
+                { "label": "WebGL Version", "value": "AUTO-DETECT" },
+                { "label": "Renderer", "value": "AUTO-DETECT" },
+                { "label": "Vendor", "value": "AUTO-DETECT" },
+                { "label": "Max Texture Size", "value": "AUTO-DETECT" }
+              ]
+            },
+            {
+              "title": "🌐 BROWSER",
+              "status": "COMPATIBLE",
+              "items": [
+                { "label": "User Agent", "value": "AUTO-DETECT" },
+                { "label": "Screen Resolution", "value": "AUTO-DETECT" },
+                { "label": "Device Pixel Ratio", "value": "AUTO-DETECT" },
+                { "label": "Color Depth", "value": "AUTO-DETECT" }
+              ]
+            },
+            {
+              "title": "⚙️ THREE.JS",
+              "status": "LOADED",
+              "items": [
+                { "label": "Library Version", "value": "r128" },
+                { "label": "Shader Support", "value": "Supported" },
+                { "label": "Shadow Mapping", "value": "Supported" }
+              ]
+            },
+            {
+              "title": "📊 PERFORMANCE",
+              "status": "OPTIMAL",
+              "items": [
+                { "label": "Memory", "value": "AUTO-DETECT" },
+                { "label": "Connection Type", "value": "AUTO-DETECT" },
+                { "label": "Hardware Concurrency", "value": "AUTO-DETECT" }
+              ]
+            }
+          ]
+        }
+      },
+      "webgl": {
+        "scene": "starfield",
+        "entities": []
+      },
+      "asx": {
+        "inline": "onTick(() => { /* diagnostics idle */ });"
+      }
+    }
+  }
+}

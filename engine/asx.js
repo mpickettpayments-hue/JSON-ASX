@@ -1,136 +1,216 @@
-// engine/asx.js — add ECS world + expose in ASX
-import { createWorld } from './ecs.js';
-
+// engine/asx.js — ASX runtime + VDOM
 export const asx = {
-  dom: {
-    width: () => window.innerWidth || document.documentElement.clientWidth,
-    height: () => window.innerHeight || document.documentElement.clientHeight,
-  },
-
-  vdom: (() => {
-    let currentTree = null;
-    const h = (tag, props = {}, children = []) => ({ tag, props, children });
-    const setProp = (el, k, v) => {
-      if (k === "style") el.setAttribute("style", v);
-      else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.substring(2).toLowerCase(), v);
-      else if (v === false || v === null || v === undefined) el.removeAttribute(k);
-      else el.setAttribute(k, v);
-    };
-    const createDom = (node) => {
-      if (typeof node === "string" || typeof node === "number") return document.createTextNode(String(node));
-      const el = document.createElement(node.tag);
-      for (const k in node.props) setProp(el, node.props[k] !== undefined ? k : k, node.props[k]);
-      (node.children || []).forEach(ch => el.appendChild(createDom(ch)));
-      return el;
-    };
-    const patchNode = (parent, newNode, oldNode, index = 0) => {
-      const existing = parent.childNodes[index];
-      if (!oldNode) { parent.appendChild(createDom(newNode)); return; }
-      if (!newNode) { parent.removeChild(existing); return; }
-      const isTextNew = typeof newNode === "string" || typeof newNode === "number";
-      const isTextOld = typeof oldNode === "string" || typeof oldNode === "number";
-      if (isTextNew && isTextOld) { if (String(newNode) !== String(oldNode)) existing.nodeValue = String(newNode); return; }
-      if (isTextNew !== isTextOld || (!isTextNew && newNode.tag !== oldNode.tag)) {
-        parent.replaceChild(createDom(newNode), existing); return;
+  version: '1.0.0',
+  
+  // Runtime state
+  runtime: {
+    frame: 0,
+    time: 0,
+    deltaTime: 0,
+    lastTime: 0,
+    tickHandlers: [],
+    inputHandlers: {},
+    
+    // Register tick handler
+    onTick(fn) {
+      if (typeof fn === 'function') {
+        asx.runtime.tickHandlers.push(fn);
       }
-      if (!isTextNew) {
-        const el = existing;
-        const newProps = newNode.props || {};
-        const oldProps = oldNode.props || {};
-        for (const k in oldProps) if (!(k in newProps)) el.removeAttribute(k);
-        for (const k in newProps) setProp(el, k, newProps[k]);
-        const len = Math.max((newNode.children || []).length, (oldNode.children || []).length);
-        for (let i = 0; i < len; i++) patchNode(el, newNode.children[i], oldNode.children[i], i);
-      }
-    };
-    const patch = (newTree, rootEl = document.getElementById("app")) => {
-      if (!rootEl) throw new Error("asx.vdom.patch: root #app not found");
-      if (!currentTree) { rootEl.innerHTML = ""; rootEl.appendChild(createDom(newTree)); currentTree = newTree; return; }
-      patchNode(rootEl, newTree, currentTree, 0);
-      currentTree = newTree;
-    };
-    return { h, patch };
-  })(),
-
-  AI: {
-    generateEnemy: (difficulty = "easy") => {
-      const speed = difficulty === "hard" ? 2.2 : 1.2;
-      return { x: Math.random() * (window.innerWidth - 30), y: -40, vy: speed };
     },
-  },
-
-  // NEW: ECS
-  ecs: (() => {
-    const world = createWorld();
-    // Common components
-    const Transform = world.defineComponent('Transform'); // { x, y, z?, rot?, sx?, sy? }
-    const Velocity  = world.defineComponent('Velocity');  // { vx, vy, vz? }
-    const RenderTag = world.defineComponent('RenderTag'); // { kind, color?, size? } — consumed by WebGL adapter
-    const Lifetime  = world.defineComponent('Lifetime');  // { t, max }
-
-    // Helpful API
-    function create(kind, data = {}) {
-      const id = world.createEntity();
-      Transform.add(id, { x: 0, y: 0, ...(data.transform || {}) });
-      if (data.velocity) Velocity.add(id, data.velocity);
-      RenderTag.add(id, { kind, ...(data.render || {}) });
-      if (data.lifetime) Lifetime.add(id, { t: 0, max: data.lifetime });
-      return id;
+    
+    // Register input handler
+    onInput(eventName, fn) {
+      if (!asx.runtime.inputHandlers[eventName]) {
+        asx.runtime.inputHandlers[eventName] = [];
+      }
+      asx.runtime.inputHandlers[eventName].push(fn);
+    },
+    
+    // Dispatch input event
+    dispatchInput(eventName, ...args) {
+      const handlers = asx.runtime.inputHandlers[eventName];
+      if (handlers) {
+        handlers.forEach(fn => {
+          try {
+            fn(...args);
+          } catch (err) {
+            console.error(`[ASX] Input handler error (${eventName}):`, err);
+          }
+        });
+      }
+    },
+    
+    // Main loop
+    loop(timestamp) {
+      const now = timestamp || performance.now();
+      asx.runtime.deltaTime = now - asx.runtime.lastTime;
+      asx.runtime.lastTime = now;
+      asx.runtime.time = now;
+      asx.runtime.frame++;
+      
+      // Execute all tick handlers
+      asx.runtime.tickHandlers.forEach(fn => {
+        try {
+          fn(asx.runtime.deltaTime, asx.runtime.frame);
+        } catch (err) {
+          console.error('[ASX] Tick handler error:', err);
+        }
+      });
+      
+      requestAnimationFrame(asx.runtime.loop);
     }
-
-    // Default systems (movement, lifetime)
-    world.registerSystem(({ dt }) => {
-      for (const id of world.query(Transform, Velocity)) {
-        const tr = Transform.get(id); const v = Velocity.get(id);
-        tr.x += (v.vx || 0) * dt; tr.y += (v.vy || 0) * dt;
+  },
+  
+  // Storage API (localStorage wrapper)
+  storage: {
+    get(key) {
+      try {
+        const val = localStorage.getItem(`asx:${key}`);
+        return val ? JSON.parse(val) : null;
+      } catch {
+        return null;
       }
-    }, 10);
-
-    world.registerSystem(({ dt }) => {
-      for (const id of world.query(Lifetime)) {
-        const life = Lifetime.get(id);
-        life.t += dt;
-        if (life.t >= life.max) world.destroyEntity(id);
+    },
+    
+    set(key, value) {
+      try {
+        localStorage.setItem(`asx:${key}`, JSON.stringify(value));
+      } catch (err) {
+        console.error('[ASX] Storage error:', err);
       }
-    }, 20);
-
-    return { world, Transform, Velocity, RenderTag, Lifetime, create };
-  })(),
-
-  runtime: (() => {
-    const inputHandlers = new Map();
-    const tickHandlers = new Set();
-
-    const onInput = (name, fn) => { if (!inputHandlers.has(name)) inputHandlers.set(name, []); inputHandlers.get(name).push(fn); };
-    const onTick  = (fn) => tickHandlers.add(fn);
-    const dispatchInput = (name, ...args) => (inputHandlers.get(name) || []).forEach(fn => fn(...args));
-    const dispatchTick  = () => tickHandlers.forEach(fn => fn());
-
-    window.addEventListener("keydown", (e) => {
-      if (e.repeat) return;
-      if (e.key === "ArrowLeft")  dispatchInput("move", -10, 0);
-      if (e.key === "ArrowRight") dispatchInput("move", 10, 0);
-      if (e.key === " ")          dispatchInput("shoot");
+    },
+    
+    remove(key) {
+      localStorage.removeItem(`asx:${key}`);
+    },
+    
+    clear() {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('asx:')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+  },
+  
+  // DOM utilities
+  dom: {
+    width() {
+      return window.innerWidth;
+    },
+    
+    height() {
+      return window.innerHeight;
+    },
+    
+    createElement(tag, attrs = {}, children = []) {
+      const el = document.createElement(tag);
+      Object.entries(attrs).forEach(([key, val]) => {
+        if (key === 'style' && typeof val === 'object') {
+          Object.assign(el.style, val);
+        } else if (key.startsWith('on')) {
+          el.addEventListener(key.substring(2).toLowerCase(), val);
+        } else {
+          el.setAttribute(key, val);
+        }
+      });
+      children.forEach(child => {
+        if (typeof child === 'string') {
+          el.appendChild(document.createTextNode(child));
+        } else if (child instanceof Node) {
+          el.appendChild(child);
+        }
+      });
+      return el;
+    }
+  },
+  
+  // Event emitter
+  events: {},
+  
+  emit(eventName, data) {
+    const handlers = asx.events[eventName] || [];
+    handlers.forEach(fn => {
+      try {
+        fn(data);
+      } catch (err) {
+        console.error(`[ASX] Event error (${eventName}):`, err);
+      }
     });
-
-    // Main loop now drives ECS, then user ticks
-    const loop = () => {
-      asx.ecs.world.update();   // ECS systems
-      dispatchTick();           // ASX tick hooks
-      requestAnimationFrame(loop);
-    };
-
-    const loadASX = async (url) => {
-      const code = await (await fetch(url)).text();
-      const runner = new Function("asx", "AI", "onTick", "onInput", "console", code);
-      runner(asx, asx.AI, onTick, onInput, console);
-    };
-
-    return { onInput, onTick, dispatchInput, dispatchTick, loadASX, loop };
-  })(),
+  },
+  
+  on(eventName, fn) {
+    if (!asx.events[eventName]) {
+      asx.events[eventName] = [];
+    }
+    asx.events[eventName].push(fn);
+  },
+  
+  off(eventName, fn) {
+    if (asx.events[eventName]) {
+      asx.events[eventName] = asx.events[eventName].filter(h => h !== fn);
+    }
+  },
+  
+  // AI stub (for builder page)
+  AI: {
+    generate(prompt) {
+      // Simulated response for demo
+      return {
+        code: `{
+  "name": "CustomAsset",
+  "version": "1.0",
+  "geometries": [{
+    "type": "BoxGeometry",
+    "args": [1, 1, 1]
+  }],
+  "materials": [{
+    "type": "MeshStandardMaterial",
+    "properties": {
+      "color": "#00ffff",
+      "metalness": 0.8,
+      "roughness": 0.2
+    }
+  }],
+  "mesh": {
+    "geometry": 0,
+    "material": 0
+  }
+}`,
+        explanation: 'Generated a basic cube with cyan metallic material.'
+      };
+    }
+  },
+  
+  // UI helpers
+  ui: {
+    alert(message) {
+      alert(message);
+    },
+    
+    confirm(message) {
+      return confirm(message);
+    },
+    
+    prompt(message, defaultValue) {
+      return prompt(message, defaultValue);
+    }
+  },
+  
+  // Time utilities
+  time: {
+    get frame() { return asx.runtime.frame; },
+    get time() { return asx.runtime.time; },
+    get deltaTime() { return asx.runtime.deltaTime; }
+  },
+  
+  // Data store (for passing page data to scripts)
+  data: {}
 };
 
-// Global helpers for inline ASX
-window.asx = asx;
-window.onTick = (fn) => asx.runtime.onTick(fn);
-window.onInput = (evt, fn) => asx.runtime.onInput(evt, fn);
+// Initialize runtime
+asx.runtime.lastTime = performance.now();
+
+// Export for module usage
+export default asx;
