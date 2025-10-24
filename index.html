@@ -1,161 +1,363 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASX Model Builder OS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght:400;700;900&display=swap" rel="stylesheet">
+  <title>ASX GUX — Glass Matrix OS</title>
   <style>
-    html, body { 
-      margin: 0; 
-      height: 100%; 
-      background: #000000; 
-      color: #00ffff; 
-      font-family: 'Courier New', monospace;
-      overflow: hidden;
+    :root{
+      --bg:#04070a; --glass: rgba(255,255,255,.08); --glass-2: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.14); --text:#e6f6ff; --muted:#a7c2cf; --accent:#61e7ff; --accent-2:#00ffa3;
+      --warning:#ffd166; --danger:#ff3366; --shadow:0 10px 30px rgba(0,0,0,.45);
+      --radius:18px; --blur:16px; --dock: rgba(255,255,255,.10);
+      --grid: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 80px),
+              repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 80px);
     }
-    
-    #root { 
-      position: fixed; 
-      inset: 0; 
-      display: grid; 
-      grid-template-rows: auto 1fr; 
-    }
-    
-    /* Top HUD Bar */
-    #hud { 
-      display: flex; 
-      align-items: center; 
-      gap: 12px; 
-      padding: 12px 20px; 
-      background: rgba(0, 20, 20, 0.95);
-      border-bottom: 2px solid #00ffff;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-      z-index: 100;
-    }
-    
-    #hud .logo { 
-      font-family: 'Orbitron', monospace;
-      font-weight: 900; 
-      letter-spacing: 2px; 
-      padding: 6px 12px; 
-      background: linear-gradient(135deg, #00ffff, #00ff00);
-      color: #000000; 
-      border-radius: 4px;
-      text-shadow: none;
-      font-size: 1.1em;
-    }
-    
-    #hud .route { 
-      font-family: 'Orbitron', monospace;
-      color: #00ffff;
-      font-weight: 700;
-      text-transform: uppercase;
-      text-shadow: 0 0 10px #00ffff;
-    }
-    
-    #hud .nav-links {
-      display: flex;
-      gap: 10px;
-      margin-left: auto;
-    }
-    
-    #hud .nav-links a {
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      text-transform: uppercase;
-      text-decoration: none;
-      color: #00ffff;
-      padding: 6px 12px;
-      background: rgba(0, 50, 50, 0.8);
-      border: 1px solid #00ffff;
-      border-radius: 3px;
-      font-size: 0.85em;
-      transition: all 0.3s ease;
-    }
-    
-    #hud .nav-links a:hover {
-      background: rgba(0, 100, 100, 0.9);
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
-    }
-    
-    /* Main Frame */
-    #frame { 
-      position: relative; 
-      overflow: hidden; 
-    }
-    
-    /* WebGL Canvas (Primary Renderer) */
-    canvas#gl { 
-      position: absolute; 
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-    
-    /* DOM HUD Layer (Overlays + Fallback) */
-    #hud-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 10;
-    }
-    
-    #hud-layer > * {
-      pointer-events: auto;
-    }
-    
-    /* Loading indicator */
-    .loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Orbitron', monospace;
-      color: #00ffff;
-      font-size: 1.5em;
-      text-shadow: 0 0 20px #00ffff;
-      animation: pulse 1.5s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{height:100%}
+    body{ margin:0; background:var(--bg); color:var(--text); font:500 16px/1.5 ui-sans-serif, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans"; overflow-x:hidden }
+
+    /* Matrix background */
+    #matrix{ position:fixed; inset:0; z-index:0; filter:contrast(1.1) saturate(1.1); background: radial-gradient(1200px 800px at 70% -20%, rgba(0,255,196,.25), transparent 60%), var(--grid); }
+
+    /* App chrome */
+    .app{ position:relative; z-index:1; }
+    .container{ width:min(1200px, 92vw); margin:0 auto; }
+
+    /* Top nav */
+    .topnav{ position:sticky; top:14px; z-index:12; }
+    .nav-wrap{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 16px; border-radius: calc(var(--radius) + 6px); background: var(--glass); border:1px solid var(--stroke); backdrop-filter: blur(var(--blur)); box-shadow:var(--shadow); }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .logo{ width:34px; height:34px; border-radius:50%; background: conic-gradient(from 120deg, var(--accent), #7dffde, var(--accent-2), var(--accent)); box-shadow:0 0 40px rgba(97,231,255,.45), inset 0 0 20px rgba(255,255,255,.18) }
+    .brand h1{ font-size:18px; margin:0; letter-spacing:.8px }
+    .nav{ display:flex; flex-wrap:wrap; gap:10px; }
+    .nav a{ padding:8px 12px; border-radius:12px; color:var(--text); text-decoration:none; border:1px solid transparent }
+    .nav a[aria-current="page"], .nav a:hover{ background: var(--glass-2); border-color: var(--stroke) }
+    .status{ display:flex; align-items:center; gap:10px }
+    .badge{ padding:6px 10px; border-radius:12px; border:1px solid var(--stroke); background:var(--glass-2); color:var(--muted) }
+    .btn{ appearance:none; border:1px solid var(--stroke); background:var(--glass); color:var(--text); padding:8px 14px; border-radius:12px; cursor:pointer; backdrop-filter: blur(calc(var(--blur) - 4px)) }
+    .btn:hover{ background:rgba(255,255,255,.12) }
+    .btn.primary{ border-color: transparent; background:linear-gradient(180deg, rgba(97,231,255,.35), rgba(97,231,255,.15)) }
+
+    /* Hero */
+    .hero{ margin:32px auto; display:grid; grid-template-columns: 1.3fr .9fr; gap:20px }
+    .card{ border:1px solid var(--stroke); border-radius: var(--radius); background: var(--glass); backdrop-filter: blur(var(--blur)); box-shadow:var(--shadow) }
+    .card .pad{ padding:22px }
+    .kicker{ color:var(--muted); font-size:14px; letter-spacing:.2em; text-transform:uppercase }
+    .hero h2{ font-size: clamp(28px, 4.4vw, 48px); margin:.35em 0 .3em; line-height:1.1 }
+    .cta-row{ display:flex; flex-wrap:wrap; gap:12px }
+    .callout{ display:grid; grid-template-columns: 1fr 1fr; gap:14px }
+    .mini{ padding:14px; border-radius:14px; border:1px dashed var(--stroke); background:var(--glass-2) }
+
+    /* Grids */
+    .section{ margin:32px auto }
+    .section h3{ margin:0 0 12px; font-size:20px; letter-spacing:.6px }
+    .grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px }
+    .tile{ border:1px solid var(--stroke); border-radius:16px; background: var(--glass-2); overflow:hidden; display:flex; flex-direction:column }
+    .tile .thumb{ aspect-ratio: 16/9; background: radial-gradient(circle at 30% 10%, rgba(97,231,255,.35), transparent 50%), linear-gradient(0deg, rgba(255,255,255,.06), rgba(255,255,255,0)); position:relative }
+    .tile .thumb .play{ position:absolute; inset:auto auto 10px 10px; padding:6px 10px; border-radius:10px; border:1px solid var(--stroke); background:var(--glass); font-size:12px }
+    .tile .meta{ padding:12px; display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center }
+    .chip{ font-size:12px; padding:6px 8px; border-radius:999px; border:1px solid var(--stroke); background:var(--glass); color:var(--muted) }
+
+    /* Wallet / Marketplace */
+    .cols{ display:grid; grid-template-columns: 1fr 1fr; gap:14px }
+    .list{ display:grid; gap:10px }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-radius:12px; border:1px solid var(--stroke); background:var(--glass-2) }
+
+    footer{ margin:40px 0 92px; color:var(--muted) }
+    .footer-grid{ display:grid; grid-template-columns: 2fr 1fr 1fr; gap:14px }
+
+    /* Auth Modal (glass w/ matrix behind) */
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:20 }
+    .modal.active{ display:flex }
+    .backdrop{ position:absolute; inset:0; backdrop-filter: blur(30px); background: rgba(0,0,0,.35) }
+    .sheet{ position:relative; width:min(560px, 92vw); border-radius: 22px; border:1px solid var(--stroke); background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(255,255,255,.06)); box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow:hidden }
+    .sheet .header{ padding:22px; border-bottom: 1px solid var(--stroke); background: rgba(97,231,255,.06) }
+    .sheet .body{ padding:22px; display:grid; gap:12px }
+    .sheet .rowlabel{ font-size:13px; color:var(--muted) }
+    .google-btn{ display:flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; padding:12px; background:#fff; color:#111; border:none; cursor:pointer }
+    .google-btn img{ width:18px; height:18px }
+    .close-x{ position:absolute; top:10px; right:10px; border:none; background:transparent; color:var(--text); font-size:20px; cursor:pointer }
+
+    /* OS Dock */
+    .dock{ position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:13; display:flex; gap:10px; padding:10px; border-radius:16px; border:1px solid var(--stroke); background:var(--dock); backdrop-filter: blur(16px); box-shadow:var(--shadow) }
+    .dock .ico{ width:44px; height:44px; border-radius:12px; display:grid; place-items:center; border:1px solid var(--stroke); background:var(--glass) }
+    .dock .ico:hover{ background:rgba(255,255,255,.12); cursor:pointer }
+
+    /* App Windows */
+    .window{ position:fixed; inset:auto auto 96px 50%; transform:translateX(-50%); width:min(1100px, 94vw); max-height:70vh; display:none; flex-direction:column; z-index:19; border:1px solid var(--stroke); background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(255,255,255,.06)); backdrop-filter: blur(18px); border-radius:20px; box-shadow: 0 40px 90px rgba(0,0,0,.6) }
+    .window.active{ display:flex }
+    .w-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; border-bottom:1px solid var(--stroke) }
+    .w-body{ padding:14px; overflow:auto }
+
+    /* Responsive */
+    @media (max-width: 960px){ .hero{ grid-template-columns:1fr } .grid{ grid-template-columns:1fr 1fr } .cols{ grid-template-columns:1fr } .footer-grid{ grid-template-columns:1fr } }
+    @media (max-width: 640px){ .grid{ grid-template-columns:1fr } }
   </style>
 </head>
 <body>
-  <div id="root">
-    <div id="hud">
-      <div class="logo">ASX</div>
-      <div class="route" id="routeLabel">INITIALIZING...</div>
-      <div class="nav-links">
-        <a href="#/home">HOME</a>
-        <a href="#/marketplace">STORE</a>
-        <a href="#/builder">BUILDER</a>
-        <a href="#/demos">DEMOS</a>
+  <canvas id="matrix" aria-hidden="true"></canvas>
+
+  <div class="app">
+    <header class="topnav container">
+      <div class="nav-wrap">
+        <div class="brand"><div class="logo" aria-hidden="true"></div><h1>ASX</h1></div>
+        <nav class="nav" aria-label="Primary">
+          <a href="#/home" aria-current="page">HOME</a>
+          <a href="#/arcade">ARCADE</a>
+          <a href="#/builder">BUILDER</a>
+          <a href="#/wallet">WALLET</a>
+          <a href="#/market">MARKET</a>
+          <a href="#/docs">DOCS</a>
+        </nav>
+        <div class="status">
+          <span class="badge" id="badgeTier">Badge: Bronze</span>
+          <button class="btn" id="connectWallet">Connect Wallet</button>
+          <button class="btn primary" id="openAuth">Sign in</button>
+        </div>
       </div>
+    </header>
+
+    <main class="container">
+      <!-- Hero -->
+      <section class="hero" id="home">
+        <article class="card"><div class="pad">
+          <div class="kicker">Remix the Web. Own the Game.</div>
+          <h2>ASX Website GUX — Unified Glass OS</h2>
+          <p>One container. Modular apps. Matrix core. Arcade, Builder, Wallet, Market, CMS, App Generator, and LLM share the same GUX and badge economy.</p>
+          <div class="cta-row">
+            <a class="btn" href="#/arcade">Explore ROMs →</a>
+            <a class="btn primary" href="#/builder">Launch Builder →</a>
+            <a class="btn" href="#/wallet">Stake ASX →</a>
+          </div>
+        </div></article>
+        <aside class="card callout">
+          <div class="mini"><div class="rowlabel">Lore Sync</div><p style="margin:6px 0 0">Unlocks appear as you ship ROMs, remix, and stake. Your glow evolves with tier.</p></div>
+          <div class="mini"><div class="rowlabel">Scanline Shimmer</div><p style="margin:6px 0 0">Vapor grid + holo tapes, rendered above the matrix for readable glass.</p></div>
+        </aside>
+      </section>
+
+      <!-- Arcade Preview Grid -->
+      <section class="section" id="arcade">
+        <h3>🎮 Arcade — Featured ROMs</h3>
+        <div class="grid" id="arcadeGrid"></div>
+      </section>
+
+      <!-- Builder Showcase -->
+      <section class="section" id="builder">
+        <h3>🧩 Builder — Recent Creations</h3>
+        <div class="grid" id="builderGrid"></div>
+      </section>
+
+      <!-- Wallet + Activity -->
+      <section class="section" id="wallet">
+        <h3>🏦 Wallet</h3>
+        <div class="cols">
+          <div class="card"><div class="pad">
+            <div class="list">
+              <div class="row"><span>ASX Token Balance</span><span class="chip" id="asxBal">0.00</span></div>
+              <div class="row"><span>Stake</span><button class="btn" id="stakeBtn">Stake 50 ASX</button></div>
+              <div class="row"><span>Badge Tier</span><span class="chip" id="tierChip">Bronze</span></div>
+              <div class="row"><span>Vault Mode</span><button class="btn" id="vaultBtn">Open Vault</button></div>
+            </div>
+          </div></div>
+          <div class="card"><div class="pad">
+            <div class="rowlabel">Transaction History</div>
+            <div class="list" id="txList"></div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- Marketplace -->
+      <section class="section" id="market">
+        <h3>🛍️ Marketplace</h3>
+        <div class="grid" id="marketGrid"></div>
+      </section>
+
+      <footer class="container">
+        <div class="footer-grid">
+          <div><div class="kicker">ASX</div><p>Docs: API • ROM Spec • Badge Schema</p></div>
+          <div><div class="kicker">Socials</div><p>Discord • Twitter • GitHub</p></div>
+          <div><div class="kicker">Legal</div><p>Terms • Privacy • Token Disclaimer</p></div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Dock / App Launcher -->
+  <div class="dock" role="toolbar" aria-label="App Dock">
+    <div class="ico" data-open="llm" title="LLM Chat">💬</div>
+    <div class="ico" data-open="generator" title="App Generator">🧪</div>
+    <div class="ico" data-open="cms" title="Joe's List (CMS)">🗂️</div>
+    <div class="ico" data-open="surfzilla" title="SurfZilla">🌊</div>
+    <div class="ico" data-open="docs" title="Docs">📚</div>
+  </div>
+
+  <!-- WINDOWS -->
+  <section class="window" id="win-llm" aria-label="LLM Chat">
+    <header class="w-head"><strong>API / LLM Chat</strong><button class="btn" data-close-window>Close</button></header>
+    <div class="w-body">
+      <div class="list" id="chatList" style="margin-bottom:10px"></div>
+      <div class="row"><input id="chatInput" placeholder="Ask the model…" style="flex:1; background:transparent; border:1px solid var(--stroke); border-radius:12px; padding:10px; color:var(--text)"><button class="btn primary" id="chatSend">Send</button></div>
+      <small class="muted">Demo local echo; wire to your LLM endpoint later.</small>
     </div>
-    <div id="frame">
-      <canvas id="gl"></canvas>
-      <div id="hud-layer">
-        <div class="loading">LOADING ASX OS...</div>
+  </section>
+
+  <section class="window" id="win-generator" aria-label="App Generator">
+    <header class="w-head"><strong>App Generator</strong><button class="btn" data-close-window>Close</button></header>
+    <div class="w-body">
+      <div class="row"><input id="genPrompt" placeholder="Describe your app…" style="flex:1; background:transparent; border:1px solid var(--stroke); border-radius:12px; padding:10px; color:var(--text)"><button class="btn primary" id="genBuild">Generate</button></div>
+      <div id="genResult" class="list" style="margin-top:10px"></div>
+      <small class="muted">Outputs JSON MVC blocks ready for os.json.</small>
+    </div>
+  </section>
+
+  <section class="window" id="win-cms" aria-label="Joe's List CMS">
+    <header class="w-head"><strong>Joe's List (CMS)</strong><button class="btn" data-close-window>Close</button></header>
+    <div class="w-body">
+      <div class="row"><input id="cmsNew" placeholder="New item" style="flex:1; background:transparent; border:1px solid var(--stroke); border-radius:12px; padding:10px; color:var(--text)"><button class="btn" id="cmsAdd">Add</button></div>
+      <div id="cmsList" class="list" style="margin-top:10px"></div>
+      <small class="muted">Drag-sort coming; persist in localStorage for now.</small>
+    </div>
+  </section>
+
+  <section class="window" id="win-surfzilla" aria-label="SurfZilla">
+    <header class="w-head"><strong>SurfZilla</strong><button class="btn" data-close-window>Close</button></header>
+    <div class="w-body">
+      <div class="rowlabel">Web Tasks</div>
+      <div class="list" id="surfList"></div>
+      <div class="row"><input id="surfNew" placeholder="Add surf task" style="flex:1; background:transparent; border:1px solid var(--stroke); border-radius:12px; padding:10px; color:var(--text)"><button class="btn" id="surfAdd">Add</button></div>
+    </div>
+  </section>
+
+  <section class="window" id="win-docs" aria-label="Docs">
+    <header class="w-head"><strong>Docs</strong><button class="btn" data-close-window>Close</button></header>
+    <div class="w-body">
+      <div class="list">
+        <div class="row"><span>API</span><a class="btn" href="#/docs/api">Open</a></div>
+        <div class="row"><span>ROM Spec</span><a class="btn" href="#/docs/rom">Open</a></div>
+        <div class="row"><span>Badge Schema</span><a class="btn" href="#/docs/badges">Open</a></div>
+      </div>
+      <article id="docPane" style="margin-top:12px; border:1px solid var(--stroke); border-radius:12px; padding:12px; background:var(--glass-2)">
+        <em>Select a doc.</em>
+      </article>
+    </div>
+  </section>
+
+  <!-- Auth Modal (Google Sign-In) -->
+  <div class="modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="backdrop" data-close></div>
+    <div class="sheet">
+      <button class="close-x" data-close aria-label="Close">×</button>
+      <div class="header"><strong id="authTitle">Sign in</strong></div>
+      <div class="body">
+        <p>Authenticate to sync badges, wallet state, and remix history.</p>
+        <!-- Replace with GIS button in production -->
+        <button class="google-btn" id="googleBtn"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%234285F4' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.9-6.9C35.6 1.86 30.2 0 24 0 14.64 0 6.48 5.38 2.56 13.22l8.8 6.83C13.22 14.38 18.16 9.5 24 9.5z'/%3E%3Cpath fill='%2334A853' d='M46.5 24.5c0-1.57-.15-3.08-.43-4.5H24v9h12.7c-.55 2.98-2.24 5.5-4.77 7.19l7.3 5.67C43.47 38.02 46.5 31.76 46.5 24.5z'/%3E%3Cpath fill='%23FBBC05' d='M11.36 28.05A14.5 14.5 0 0 1 9.5 24c0-1.4.23-2.74.64-4l-8.8-6.83A24 24 0 0 0 0 24c0 3.86.9 7.51 2.5 10.77l8.86-6.72z'/%3E%3Cpath fill='%23EA4335' d='M24 48c6.49 0 11.95-2.15 15.9-5.84l-7.3-5.67c-2.03 1.36-4.63 2.16-8.6 2.16-5.84 0-10.78-4.88-12.64-11.55l-8.8 6.83C6.48 42.62 14.64 48 24 48z'/%3E%3C/svg%3E"/> Continue with Google</button>
+        <div class="rowlabel">Security note</div>
+        <small>Uses Google Identity Services in production; this demo simulates the flow.</small>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { bootOS } from './engine/os-loader.js';
-    
-    bootOS({
-      osUrl: './os/os.json',
-      canvasId: 'gl',
-      hudRootId: 'hud-layer',
-      routeLabelId: 'routeLabel'
-    }).catch(err => {
-      console.error('Boot failed:', err);
-      document.querySelector('.loading').textContent = 'BOOT ERROR - Check Console';
-    });
+    /* ------------------------- Matrix background ------------------------- */
+    const cvs = document.getElementById('matrix');
+    const ctx = cvs.getContext('2d');
+    let W, H, cols, drops, raf;
+    function resize(){ const dpr = Math.min(2, window.devicePixelRatio || 1); W = cvs.width = Math.floor(innerWidth * dpr); H = cvs.height = Math.floor(innerHeight * dpr); ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr); cols = Math.ceil(innerWidth / 16); drops = Array(cols).fill(0); }
+    function tick(){ ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(0,0,innerWidth,innerHeight); ctx.fillStyle = '#00ffa3'; ctx.font = '14px monospace'; for(let i=0;i<drops.length;i++){ const x=i*16,y=drops[i]*16; const char=String.fromCharCode(0x30A0 + (Math.random()*96|0)); ctx.fillText(char, x, y); if (y>innerHeight && Math.random()>.975) drops[i]=0; else drops[i]++; } raf = requestAnimationFrame(tick); }
+    addEventListener('resize', resize); resize(); tick();
+
+    /* ----------------------------- OS schema ----------------------------- */
+    const OS = {
+      meta:{ name:'ASX OS', version:'1.0.0', boot:'home' },
+      routes:{ '/':'home','/home':'home','/arcade':'arcade','/builder':'builder','/wallet':'wallet','/market':'market','/docs':'docs',
+               '/app/llm':'__win:llm','/app/generator':'__win:generator','/app/cms':'__win:cms','/app/surfzilla':'__win:surfzilla','/app/docs':'__win:docs',
+               '/docs/api':'__doc:api','/docs/rom':'__doc:rom','/docs/badges':'__doc:badges' }
+    };
+
+    /* --------------------------- Demo data sets -------------------------- */
+    const arcadeROMs = [
+      {name:'Surf Bros', score:12890, remix:12}, {name:'Ms. Pac-Man ASX', score:9900, remix:33}, {name:'Donkey Xong', score:7770, remix:5},
+      {name:'Astro Runner', score:14550, remix:21}, {name:'Grid Breaker', score:8200, remix:9}, {name:'Xelda', score:11900, remix:17},
+    ];
+    const creations = [
+      {name:'JSON Boyz', forks:14}, {name:'Xelda', forks:21}, {name:'Tetris Clone', forks:32}, {name:'Dungeon Cubes', forks:8}, {name:'Neon Racer', forks:5}, {name:'City Builder', forks:18},
+    ];
+    const market = [
+      {name:'ROM Pack A', price:'12.0 ASX'}, {name:'Avatar Skin – HoloFox', price:'4.5 ASX'}, {name:'Lore Relic – Tape #3', price:'1.0 ASX'}, {name:'Creator Tip – 5 ASX', price:'5.0 ASX'}, {name:'ROM Pack B', price:'9.0 ASX'}, {name:'Badge Shader – Prism', price:'7.0 ASX'},
+    ];
+
+    /* --------------------------- Render helpers -------------------------- */
+    const $ = (s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+    function tileTemplate({title, subtitle, right, action='Play'}){ return `
+      <article class="tile" tabindex="0">
+        <div class="thumb"><button class="play btn" aria-label="${action}">${action}</button></div>
+        <div class="meta"><div><div>${title}</div><small style="color:var(--muted)">${subtitle||''}</small></div><span class="chip">${right||''}</span></div>
+      </article>`; }
+
+    $('#arcadeGrid').innerHTML = arcadeROMs.map(r=>tileTemplate({ title:r.name, subtitle:`High score: ${r.score}`, right:`Remix: ${r.remix}`, action:'Play' })).join('');
+    $('#builderGrid').innerHTML = creations.map(c=>tileTemplate({ title:c.name, subtitle:'Fork-ready template', right:`${c.forks} forks`, action:'Fork' })).join('');
+    $('#marketGrid').innerHTML = market.map(m=>tileTemplate({ title:m.name, subtitle:'Digital good', right:m.price, action:'Buy' })).join('');
+
+    /* --------------------------- Wallet logic ---------------------------- */
+    let balance = +(localStorage.getItem('asxBal')||0); let tier = localStorage.getItem('asxTier')||'Bronze';
+    function pushTx(text){ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<span>${text}</span><span class="chip">OK</span>`; $('#txList').prepend(row); }
+    function setBalance(v){ balance=v; $('#asxBal').textContent=balance.toFixed(2); localStorage.setItem('asxBal', balance); }
+    function setTier(t){ tier=t; $('#tierChip').textContent=t; $('#badgeTier').textContent=`Badge: ${t}`; localStorage.setItem('asxTier', t); }
+    setBalance(balance); setTier(tier);
+    $('#stakeBtn').addEventListener('click',()=>{ if(balance>=50){ setBalance(balance-50); pushTx('Staked 50 ASX'); if(balance>=100) setTier('Silver'); } else { setBalance(balance+100); pushTx('Airdrop +100 ASX (demo)'); }});
+    $('#vaultBtn').addEventListener('click',()=> pushTx('Vault opened (demo)'));
+    $('#connectWallet').addEventListener('click',()=>{ setTimeout(()=>{ setBalance(balance+150); pushTx('Wallet connected'); if(balance+150>=200) setTier('Gold'); }, 300); });
+
+    /* -------------------------- Auth Modal flow -------------------------- */
+    const modal=$('#authModal'); $('#openAuth').addEventListener('click',()=>modal.classList.add('active')); $$('[data-close]').forEach(el=>el.addEventListener('click',()=>modal.classList.remove('active'))); document.addEventListener('keydown',e=>{ if(e.key==='Escape') modal.classList.remove('active'); });
+    $('#googleBtn').addEventListener('click',()=>{ modal.classList.remove('active'); pushTx('Signed in with Google (demo)'); setTier('Gold'); });
+
+    /* ------------------------------ Windows ------------------------------ */
+    const openWin = id => { $$('.window').forEach(w=>w.classList.remove('active')); $(`#win-${id}`)?.classList.add('active'); };
+    const closeWins = ()=> $$('.window').forEach(w=>w.classList.remove('active'));
+    $$('.dock .ico').forEach(i=> i.addEventListener('click', ()=> openWin(i.dataset.open)));
+    $$('[data-close-window]').forEach(b=> b.addEventListener('click', closeWins));
+
+    /* ------------------------------ Router ------------------------------- */
+    function route(){
+      const raw = location.hash.replace('#','') || '/home';
+      const path = raw.startsWith('/')? raw : '/'+raw; // normalize
+      const target = OS.routes[path] || 'home';
+      // Scroll to section for normal pages
+      if(!String(target).startsWith('__')){
+        const el = document.getElementById(target);
+        if(el) el.scrollIntoView({behavior:'smooth'});
+        $$('.nav a').forEach(a=>a.removeAttribute('aria-current')); const cur = $(`.nav a[href="#${path}"]`); if(cur) cur.setAttribute('aria-current','page');
+        closeWins();
+      }
+      // Open app windows
+      if(String(target).startsWith('__win:')){ openWin(target.split(':')[1]); }
+      // Docs subroutes
+      if(String(target).startsWith('__doc:')){ openWin('docs'); const pane = $('#docPane'); const kind = target.split(':')[1]; const map = { api:`<h4>API</h4><p>REST + WebSocket endpoints for ROM, Wallet, and Builder.</p>`, rom:`<h4>ROM Spec</h4><p>JSON MVC.zip with <code>os.json</code> registry and lazy modules.</p>`, badges:`<h4>Badge Schema</h4><p>Tiers: Bronze → Silver → Gold → Prism (stake + remix counts).</p>`}; pane.innerHTML = map[kind]||'<em>Unknown doc.</em>'; }
+    }
+    addEventListener('hashchange', route); route();
+
+    /* --------------------------- LLM Chat demo --------------------------- */
+    function chatBubble(role, text){ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<strong>${role}</strong><span style="opacity:.9">${text}</span>`; return row; }
+    $('#chatSend').addEventListener('click', ()=>{ const msg=$('#chatInput').value.trim(); if(!msg) return; $('#chatList').appendChild(chatBubble('You', msg)); $('#chatInput').value=''; setTimeout(()=>{ $('#chatList').appendChild(chatBubble('ASX', `Echo: ${msg}`)); $('#chatList').lastElementChild.scrollIntoView({behavior:'smooth'}); }, 200); });
+
+    /* ------------------------- App Generator demo ------------------------ */
+    $('#genBuild').addEventListener('click', ()=>{ const p=$('#genPrompt').value.trim()||'My App'; const slug=p.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); const block={ title:p, hud:{content:{type:'dashboard', cards:[{icon:'🚀', title:'Start', description:'Generated by App Generator', link:`#/${slug}` }]}}, webgl:{scene:'matrix-rain'}, asx:{inline:'onTick(()=>{})'} }; const pre=document.createElement('pre'); pre.textContent=JSON.stringify(block, null, 2); $('#genResult').innerHTML=''; $('#genResult').append(pre); });
+
+    /* -------------------------- Joe's List (CMS) ------------------------- */
+    const CMS_KEY='asx_cms_items'; const cms = JSON.parse(localStorage.getItem(CMS_KEY)||'[]');
+    function renderCMS(){ const list=$('#cmsList'); list.innerHTML=''; cms.forEach((t,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<span>${t}</span><button class='btn' data-del='${i}'>Delete</button>`; list.appendChild(row); }); $$('[data-del]').forEach(b=> b.addEventListener('click', ()=>{ cms.splice(+b.dataset.del,1); localStorage.setItem(CMS_KEY, JSON.stringify(cms)); renderCMS(); })); }
+    renderCMS();
+    $('#cmsAdd').addEventListener('click', ()=>{ const v=$('#cmsNew').value.trim(); if(!v) return; cms.push(v); localStorage.setItem(CMS_KEY, JSON.stringify(cms)); $('#cmsNew').value=''; renderCMS(); });
+
+    /* ------------------------------ SurfZilla ---------------------------- */
+    const SURF_KEY='asx_surf_tasks'; const surf = JSON.parse(localStorage.getItem(SURF_KEY)||'[]');
+    function renderSurf(){ const list=$('#surfList'); list.innerHTML=''; surf.forEach((t,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<span>${t}</span><button class='btn' data-dels='${i}'>Done</button>`; list.appendChild(row); }); $$('[data-dels]').forEach(b=> b.addEventListener('click', ()=>{ surf.splice(+b.dataset.dels,1); localStorage.setItem(SURF_KEY, JSON.stringify(surf)); renderSurf(); })); }
+    renderSurf();
+    $('#surfAdd').addEventListener('click', ()=>{ const v=$('#surfNew').value.trim(); if(!v) return; surf.push(v); localStorage.setItem(SURF_KEY, JSON.stringify(surf)); $('#surfNew').value=''; renderSurf(); });
   </script>
 </body>
 </html>
